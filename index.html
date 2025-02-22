@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>FCK AFD Bildmischer ;)</title>
+
+  <!-- Google Font "Chewy" -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" />
+  <!-- Cropper.js (CDN) -->
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css" />
+
+  <style>
+    :root {
+      --title-font: 'Chewy', cursive;
+      --title-color: #e20f0f;   /* Rot */
+      --title-outline: #fff;    /* Weißer Rand */
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f8dfd5;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      text-align: center;
+      color: #333;
+      font-family: sans-serif;
+      position: relative;
+    }
+
+    /* Header: Hintergrund auf #02a7d7 */
+    header {
+      background: #02a7d7;
+      padding: 15px 20px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 3rem;
+      font-family: var(--title-font);
+      color: var(--title-color);
+      line-height: 1.2;
+      text-shadow:
+        -2px 0 var(--title-outline),
+         2px 0 var(--title-outline),
+         0  2px var(--title-outline),
+         0 -2px var(--title-outline);
+    }
+
+    /* Hauptbereich */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px;
+    }
+    #introTitle {
+      margin-top: 20px;
+      font-size: 2rem;
+      font-family: var(--title-font);
+      color: var(--title-color);
+      text-shadow:
+        -1px 0 var(--title-outline),
+         1px 0 var(--title-outline),
+         0  1px var(--title-outline),
+         0 -1px var(--title-outline);
+      line-height: 1.2;
+    }
+    #introText {
+      max-width: 600px;
+      margin: 10px auto 30px;
+      line-height: 1.4;
+      color: #7b3f2f;
+    }
+
+    /* Overlay-Icons (oben) */
+    #iconContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      max-width: 600px;
+      margin-bottom: 30px;
+    }
+    .overlayIcon {
+      width: 90px;
+      height: 90px;
+      object-fit: cover;
+      cursor: pointer;
+      border: 2px solid transparent;
+      border-radius: 4px;
+      transition: border 0.3s;
+    }
+    .overlayIcon:hover {
+      border-color: #da8f6b;
+    }
+    .overlayIcon.selected {
+      border: 2px solid #b84b37;
+    }
+
+    /* Plus-Box für Bonuslevel (6. Icon) -> flex-centriert */
+    .plusBox {
+      display: none; /* erst ab Bonuslevel sichtbar */
+      width: 90px;
+      height: 90px;
+      font-size: 70px;
+      color: #333;
+      border: 2px dashed #da8f6b;
+      border-radius: 4px;
+      background: #f8dfd5;
+      cursor: pointer;
+      /* Text zentrieren per Flexbox */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .plusBox:hover {
+      border-color: #a43e31;
+    }
+
+    /* DropZone + Vorschau */
+    #dropZone {
+      width: 300px;
+      height: 200px;
+      background:
+        linear-gradient(rgba(242,188,162,0.7), rgba(242,188,162,0.7)),
+        url('dummy.png') center / cover no-repeat;
+      border: 2px dashed #da8f6b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      margin-bottom: 20px;
+    }
+    #dropZone.hover {
+      background:
+        linear-gradient(rgba(242,188,162,0.9), rgba(242,188,162,0.9)),
+        url('dummy.png') center / cover no-repeat;
+    }
+    #dropZone p {
+      font-size: 14px;
+      color: #7b3f2f;
+      margin: 0 10px;
+      text-align: center;
+      max-width: 80%;
+    }
+    #preview {
+      width: 300px;
+      height: auto;
+      margin-bottom: 20px;
+      border: 2px solid #da8f6b;
+      border-radius: 4px;
+      display: none;
+    }
+
+    /* Mischen-Button */
+    #mixButton {
+      padding: 10px 20px;
+      background: #b84b37;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    #mixButton:hover {
+      background: #a43e31;
+    }
+
+    /* Social Media Icons – unter Mischen, über Footer */
+    #socialContainer {
+      text-align: center;
+      margin: 20px 0;
+    }
+    #socialContainer p {
+      margin: 0 0 10px;
+      font-weight: bold;
+      color: #7b3f2f;
+    }
+    .socialIcon {
+      width: 40px;
+      height: auto;
+      margin: 0 10px;
+      cursor: pointer;
+    }
+
+    /* Footer: Hintergrund #02a7d7 */
+    footer {
+      position: relative;
+      background: #02a7d7;
+      padding: 10px;
+      color: #7b3f2f;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    footer p {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+    #mixCounter {
+      position: absolute;
+      right: 20px;
+      bottom: 10px;
+      font-weight: bold;
+      background: #ffffff33;
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+
+    /* Canvas */
+    canvas {
+      display: none;
+    }
+
+    /* Crop-Dialog */
+    #cropModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #cropModalContent {
+      background: #fff;
+      padding: 20px;
+      border-radius: 6px;
+      max-width: 90%;
+      max-height: 90%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #cropImage {
+      max-width: 100%;
+      max-height: 70vh;
+      border: 1px solid #ccc;
+    }
+    #cropButtons {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .modalBtn {
+      background-color: #b84b37;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin: 0 5px;
+      border-radius: 4px;
+    }
+    .modalBtn:hover {
+      background-color: #a43e31;
+    }
+    #cancelCropBtn {
+      background-color: #ccc;
+      color: #333;
+    }
+    #cancelCropBtn:hover {
+      background-color: #bbb;
+    }
+
+    /* Ergebnis-Dialog */
+    #resultModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #resultModalContent {
+      background: #fff;
+      border-radius: 6px;
+      max-width: 500px;
+      position: relative;
+      padding: 20px 20px 80px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #youRock {
+      margin: 0;
+      font-size: 2.2rem;
+      font-family: var(--title-font);
+      color: var(--title-color);
+      text-shadow:
+        -1px 0 var(--title-outline),
+         1px 0 var(--title-outline),
+         0  1px var(--title-outline),
+         0 -1px var(--title-outline);
+      margin-bottom: 20px;
+    }
+    #finalImage {
+      display: block;
+      max-width: 100%;
+      border-radius: 4px;
+    }
+    #downloadBtn {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #b84b37;
+      color: #fff;
+      border: none;
+      padding: 10px 30px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    #downloadBtn:hover {
+      background-color: #a43e31;
+    }
+
+    /* Konfetti (DOM) */
+    #confetti-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 99999999;
+    }
+    .confetti {
+      position: absolute;
+      width: 8px;
+      height: 16px;
+      opacity: 0.9;
+      top: 0;
+      left: 50%;
+      transform-origin: center;
+      animation: fall 5s linear forwards;
+    }
+    @keyframes fall {
+      0% {
+        top: -10vh;
+        left: var(--startX);
+        transform: rotate(0deg);
+      }
+      100% {
+        top: 110vh;
+        left: var(--endX);
+        transform: rotate(720deg);
+      }
+    }
+
+    /* Zentrale Botschaft – doppelt so groß */
+    #centerMessage {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      font-family: var(--title-font);
+      font-size: 4.4rem;
+      color: var(--title-color);
+      text-shadow:
+        -1px 0 var(--title-outline),
+         1px 0 var(--title-outline),
+         0  1px var(--title-outline),
+         0 -1px var(--title-outline);
+      z-index: 999999999;
+      background: rgba(255,255,255,0.8);
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 80%;
+      text-align: center;
+      white-space: pre-wrap; /* Damit Zeilenumbrüche angezeigt werden */
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>FCK AFD<br>Bildmischer ;)</h1>
+  </header>
+
+  <main>
+    <h2 id="introTitle">Hej!</h2>
+    <p id="introText">
+      Schön, dass du hier bist! Manchmal muss man Flagge bekennen.
+      Suche dir einen Look aus und lade dein Bild hoch.
+      Keine Angst, die Bilder werden nicht gespeichert.
+    </p>
+
+    <!-- Overlay-Icons (oben) -->
+    <div id="iconContainer">
+      <img src="Icon1.png" class="overlayIcon" data-icon="Icon1.png" alt="Overlay 1" />
+      <img src="Icon2.png" class="overlayIcon" data-icon="Icon2.png" alt="Overlay 2" />
+      <img src="Icon3.png" class="overlayIcon" data-icon="Icon3.png" alt="Overlay 3" />
+      <img src="Icon4.png" class="overlayIcon" data-icon="Icon4.png" alt="Overlay 4" />
+      <img src="Icon5.png" class="overlayIcon" data-icon="Icon5.png" alt="Overlay 5" />
+      <div id="plusIcon" class="overlayIcon plusBox">+</div>
+    </div>
+
+    <!-- Upload-Bereich & Vorschau -->
+    <div id="dropZone">
+      <p>Ziehe dein Bild hierher<br>oder klicke zum Auswählen.</p>
+    </div>
+    <img id="preview" src="dummy.png" alt="Dein Bild" />
+
+    <!-- Mischen-Button -->
+    <button id="mixButton">Mischen</button>
+
+    <!-- Social Media Icons -->
+    <div id="socialContainer">
+      <p>Post it on:</p>
+      <img src="facebook.png" alt="Facebook" class="socialIcon" />
+      <img src="Instagram.png" alt="Instagram" class="socialIcon" />
+      <img src="linkedin.png" alt="LinkedIn" class="socialIcon" />
+    </div>
+
+    <canvas id="canvas"></canvas>
+  </main>
+
+  <!-- Footer (Hintergrund #02a7d7) -->
+  <footer>
+    <p>© My Daddy Makes Grease.</p>
+    <div id="mixCounter">Bisher gemischt: 0</div>
+  </footer>
+
+  <div id="confetti-container"></div>
+  <div id="centerMessage"></div>
+
+  <!-- Crop-Dialog -->
+  <div id="cropModal">
+    <div id="cropModalContent">
+      <img id="cropImage" alt="Crop Image" />
+      <div id="cropButtons">
+        <button id="confirmCropBtn" class="modalBtn">Zuschneiden</button>
+        <button id="cancelCropBtn" class="modalBtn">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ergebnis-Dialog -->
+  <div id="resultModal">
+    <div id="resultModalContent">
+      <h3 id="youRock">You rock!</h3>
+      <img id="finalImage" src="" alt="Fertiges Bild">
+      <button id="downloadBtn">Download</button>
+    </div>
+  </div>
+
+  <!-- Hidden File Input -->
+  <input type="file" id="fileInput" accept="image/*" style="display: none;" />
+
+  <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
+  <script>
+    /****************************************
+     * 1) Variablen / Selektoren
+    ****************************************/
+    const dropZone     = document.getElementById('dropZone');
+    const preview      = document.getElementById('preview');
+    const fileInput    = document.getElementById('fileInput');
+    const mixButton    = document.getElementById('mixButton');
+    const overlayIcons = document.querySelectorAll('.overlayIcon');
+    const plusIcon     = document.getElementById('plusIcon');
+
+    const canvas       = document.getElementById('canvas');
+    const ctx          = canvas.getContext('2d');
+
+    // Crop-Dialog
+    const cropModal      = document.getElementById('cropModal');
+    const cropImage      = document.getElementById('cropImage');
+    const confirmCropBtn = document.getElementById('confirmCropBtn');
+    const cancelCropBtn  = document.getElementById('cancelCropBtn');
+
+    // Ergebnis-Dialog
+    const resultModal = document.getElementById('resultModal');
+    const finalImage  = document.getElementById('finalImage');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    // Konfetti
+    const confettiContainer = document.getElementById('confetti-container');
+    let confettiInterval = null;
+
+    // Botschaft
+    const centerMessage = document.getElementById('centerMessage');
+    let messageVisible = false;
+
+    // Durchgänge hintereinander
+    let timesInRow = 0;
+    const messages = [
+      "Gleich nochmal ?",
+      "Uh! Ein Überzeugungstäter!",
+      "Machs noch einmal mit Gefühl ;)",
+      "New Highscore!!!",
+      // Zwei Zeilen: "Captain! Ein Bonuslevel!!!\nLade deinen eigenen Look hoch"
+      "Captain! Ein Bonuslevel!!!\nLade deinen eigenen Look hoch"
+    ];
+
+    // localStorage-Gesamtzähler
+    let mixCounterValue = 0;
+    const mixCounterDiv = document.getElementById('mixCounter');
+
+    // Cropper
+    let cropper = null;
+    let uploadedImageDataURL = null;
+    let selectedOverlaySrc = null;
+
+    /****************************************
+     * 2) localStorage - Counter laden
+    ****************************************/
+    document.addEventListener('DOMContentLoaded', () => {
+      const stored = localStorage.getItem('mixCounterValue');
+      if (stored) {
+        mixCounterValue = parseInt(stored, 10) || 0;
+      }
+      updateCounterUI();
+    });
+    function updateCounterUI() {
+      mixCounterDiv.textContent = `Bisher gemischt: ${mixCounterValue}`;
+    }
+
+    /****************************************
+     * 3) DropZone / Klick Upload
+    ****************************************/
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('hover');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('hover');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('hover');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+    dropZone.addEventListener('click', () => {
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files && fileInput.files.length > 0) {
+        handleFile(fileInput.files[0]);
+      }
+    });
+
+    // Klick auf Plus-Box => Upload starten
+    plusIcon.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        cropImage.src = e.target.result;
+        cropModal.style.display = 'flex';
+        if (cropper) {
+          cropper.destroy();
+          cropper = null;
+        }
+        setTimeout(() => {
+          cropper = new Cropper(cropImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 1
+          });
+        }, 100);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    /****************************************
+     * 4) Crop-Dialog: OK / Abbrechen
+    ****************************************/
+    confirmCropBtn.addEventListener('click', () => {
+      if (!cropper) return;
+      const croppedCanvas = cropper.getCroppedCanvas({
+        width: 1000,
+        height: 1000
+      });
+      uploadedImageDataURL = croppedCanvas.toDataURL('image/png');
+      cropModal.style.display = 'none';
+      cropper.destroy();
+      cropper = null;
+
+      // Zeige Bild in #preview, verstecke #dropZone
+      preview.src = uploadedImageDataURL;
+      preview.style.display = 'block';
+      dropZone.style.display = 'none';
+    });
+
+    cancelCropBtn.addEventListener('click', () => {
+      cropModal.style.display = 'none';
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+      fileInput.value = '';
+    });
+
+    /****************************************
+     * 5) Overlay-Auswahl
+    ****************************************/
+    overlayIcons.forEach(icon => {
+      icon.addEventListener('click', () => {
+        overlayIcons.forEach(i => i.classList.remove('selected'));
+        icon.classList.add('selected');
+        selectedOverlaySrc = icon.dataset.icon;
+      });
+    });
+
+    /****************************************
+     * 6) Mischen
+    ****************************************/
+    mixButton.addEventListener('click', () => {
+      if (!uploadedImageDataURL) {
+        alert("Bitte erst ein Bild hochladen & zuschneiden!");
+        return;
+      }
+      if (!selectedOverlaySrc) {
+        alert("Bitte ein Overlay auswählen!");
+        return;
+      }
+      const baseImage = new Image();
+      baseImage.onload = () => {
+        combineImages(baseImage, selectedOverlaySrc);
+      };
+      baseImage.src = uploadedImageDataURL;
+    });
+
+    function combineImages(baseImage, overlaySrc) {
+      const overlayImg = new Image();
+      overlayImg.onload = () => {
+        canvas.width  = baseImage.width;
+        canvas.height = baseImage.height;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+
+        ctx.globalCompositeOperation = 'soft-light';
+        ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
+
+        const finalDataURL = canvas.toDataURL('image/png');
+
+        resultModal.style.display = 'flex';
+        finalImage.src = finalDataURL;
+
+        startConfetti();
+
+        fileInput.value = '';
+        uploadedImageDataURL = null;
+        selectedOverlaySrc = null;
+        overlayIcons.forEach(i => i.classList.remove('selected'));
+      };
+      overlayImg.src = overlaySrc;
+    }
+
+    /****************************************
+     * 7) Download & Botschaft
+    ****************************************/
+    downloadBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const dataURL = finalImage.src;
+      const a = document.createElement('a');
+      a.href = dataURL;
+      a.download = 'FCK_AFD_Blend.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      mixCounterValue++;
+      localStorage.setItem('mixCounterValue', mixCounterValue);
+      updateCounterUI();
+
+      timesInRow++;
+      stopConfetti();
+      resultModal.style.display = 'none';
+
+      // Warte minimal, damit der Klick nicht sofort die Botschaft wieder schließt
+      setTimeout(() => {
+        showCenterMessage();
+      }, 50);
+    });
+
+    /****************************************
+     * 8) Konfetti-Funktionen
+    ****************************************/
+    function startConfetti() {
+      stopConfetti();
+      confettiInterval = setInterval(() => {
+        spawnConfetti(5);
+      }, 200);
+    }
+    function stopConfetti() {
+      if (confettiInterval) {
+        clearInterval(confettiInterval);
+        confettiInterval = null;
+      }
+    }
+    function spawnConfetti(count) {
+      const colors = [
+        '#fce18a','#ff726d','#b48def','#f4306d',
+        '#85eec0','#57d1cd','#ff9f68','#ffe29f',
+        '#9fd6ff','#d9abff'
+      ];
+      for (let i = 0; i < count; i++) {
+        const confetti = document.createElement('div');
+        confetti.classList.add('confetti');
+
+        const c = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.backgroundColor = c;
+
+        const startX = Math.random() * 100;
+        let endX = startX + (Math.random() * 40 - 20);
+        if (endX < 0) endX = 0;
+        if (endX > 100) endX = 100;
+        confetti.style.setProperty('--startX', startX + '%');
+        confetti.style.setProperty('--endX', endX + '%');
+
+        const delay = Math.random() * 0.4;
+        confetti.style.animationDelay = delay + 's';
+
+        confettiContainer.appendChild(confetti);
+
+        setTimeout(() => {
+          confetti.remove();
+        }, (5000 + delay * 1000));
+      }
+    }
+
+    /****************************************
+     * 9) Botschaft nach Download
+    ****************************************/
+    function showCenterMessage() {
+      // Fünfter Eintrag hat zwei Zeilen
+      let idx = timesInRow - 1;
+      if (idx >= messages.length) idx = messages.length - 1;
+
+      centerMessage.textContent = messages[idx];
+      centerMessage.style.display = 'block';
+      messageVisible = true;
+
+      // Bonuslevel => plusIcon sichtbar
+      if (timesInRow >= 5) {
+        plusIcon.style.display = 'inline-flex';
+      }
+    }
+
+    /* Globaler Klick: Schließt Botschaft, wenn NICHT in #centerMessage, #iconContainer, #dropZone.
+       Dann resetUploadUI(), Bonuslevel bleibt bei timesInRow >= 5. */
+    document.addEventListener('click', (e) => {
+      if (messageVisible && !e.target.closest('#centerMessage') && !e.target.closest('#iconContainer') && !e.target.closest('#dropZone')) {
+        centerMessage.style.display = 'none';
+        messageVisible = false;
+        resetUploadUI();
+      }
+    });
+
+    function resetUploadUI() {
+      dropZone.style.display = 'flex';
+      preview.style.display = 'none';
+      if (timesInRow < 5) {
+        plusIcon.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
