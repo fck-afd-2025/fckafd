@@ -103,9 +103,9 @@
       border: 2px solid #b84b37;
     }
 
-    /* Plus-Box für Bonuslevel (6. Icon) -> flex-centriert */
+    /* Plus-Box (6. Icon) -> flex-centriert */
     .plusBox {
-      display: none; /* erst ab Bonuslevel sichtbar */
+      display: none; /* hidden by default */
       width: 90px;
       height: 90px;
       font-size: 70px;
@@ -114,7 +114,8 @@
       border-radius: 4px;
       background: #f8dfd5;
       cursor: pointer;
-      /* Text zentrieren per Flexbox */
+
+      /* Center the plus sign */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -382,7 +383,7 @@
       border-radius: 8px;
       max-width: 80%;
       text-align: center;
-      white-space: pre-wrap; /* Damit Zeilenumbrüche angezeigt werden */
+      white-space: pre-wrap; /* For \n line breaks */
     }
   </style>
 </head>
@@ -432,7 +433,7 @@
 
   <!-- Footer (Hintergrund #02a7d7) -->
   <footer>
-    <p>© My Daddy Makes Grease.</p>
+    <p>Bekenne Flagge!</p>
     <div id="mixCounter">Bisher gemischt: 0</div>
   </footer>
 
@@ -465,7 +466,7 @@
   <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
   <script>
     /****************************************
-     * 1) Variablen / Selektoren
+     * 1) Variables / Selectors
     ****************************************/
     const dropZone     = document.getElementById('dropZone');
     const preview      = document.getElementById('preview');
@@ -483,55 +484,61 @@
     const confirmCropBtn = document.getElementById('confirmCropBtn');
     const cancelCropBtn  = document.getElementById('cancelCropBtn');
 
-    // Ergebnis-Dialog
+    // Result-Dialog
     const resultModal = document.getElementById('resultModal');
     const finalImage  = document.getElementById('finalImage');
     const downloadBtn = document.getElementById('downloadBtn');
 
-    // Konfetti
+    // Confetti
     const confettiContainer = document.getElementById('confetti-container');
     let confettiInterval = null;
 
-    // Botschaft
+    // Message
     const centerMessage = document.getElementById('centerMessage');
-    let messageVisible = false;
+    let messageVisible  = false;
 
-    // Durchgänge hintereinander
+    // Times in a row (only in memory)
     let timesInRow = 0;
+
+    // Bonuslevel messages
     const messages = [
       "Gleich nochmal ?",
       "Uh! Ein Überzeugungstäter!",
       "Machs noch einmal mit Gefühl ;)",
       "New Highscore!!!",
-      // Zwei Zeilen: "Captain! Ein Bonuslevel!!!\nLade deinen eigenen Look hoch"
       "Captain! Ein Bonuslevel!!!\nLade deinen eigenen Look hoch"
     ];
 
-    // localStorage-Gesamtzähler
+    // Global mix counter in localStorage
     let mixCounterValue = 0;
     const mixCounterDiv = document.getElementById('mixCounter');
 
     // Cropper
-    let cropper = null;
-    let uploadedImageDataURL = null;
-    let selectedOverlaySrc = null;
+    let cropper            = null;
+    let uploadedImageDataURL= null;
+    let selectedOverlaySrc  = null;
 
     /****************************************
-     * 2) localStorage - Counter laden
+     * 2) localStorage - load counter
     ****************************************/
     document.addEventListener('DOMContentLoaded', () => {
+      // Load the total mixCounter from localStorage
       const stored = localStorage.getItem('mixCounterValue');
       if (stored) {
         mixCounterValue = parseInt(stored, 10) || 0;
       }
       updateCounterUI();
+
+      // Ensure plus icon is hidden if timesInRow < 5
+      plusIcon.style.display = 'none';
     });
+
     function updateCounterUI() {
       mixCounterDiv.textContent = `Bisher gemischt: ${mixCounterValue}`;
     }
 
     /****************************************
-     * 3) DropZone / Klick Upload
+     * 3) DropZone & FileInput
     ****************************************/
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -556,7 +563,6 @@
       }
     });
 
-    // Klick auf Plus-Box => Upload starten
     plusIcon.addEventListener('click', () => {
       fileInput.click();
     });
@@ -566,6 +572,8 @@
       reader.onload = (e) => {
         cropImage.src = e.target.result;
         cropModal.style.display = 'flex';
+
+        // Destroy old cropper
         if (cropper) {
           cropper.destroy();
           cropper = null;
@@ -582,20 +590,18 @@
     }
 
     /****************************************
-     * 4) Crop-Dialog: OK / Abbrechen
+     * 4) Crop-Dialog
     ****************************************/
     confirmCropBtn.addEventListener('click', () => {
       if (!cropper) return;
-      const croppedCanvas = cropper.getCroppedCanvas({
-        width: 1000,
-        height: 1000
-      });
+      const croppedCanvas = cropper.getCroppedCanvas({ width: 1000, height: 1000 });
       uploadedImageDataURL = croppedCanvas.toDataURL('image/png');
+
       cropModal.style.display = 'none';
       cropper.destroy();
       cropper = null;
 
-      // Zeige Bild in #preview, verstecke #dropZone
+      // Show preview, hide dropZone
       preview.src = uploadedImageDataURL;
       preview.style.display = 'block';
       dropZone.style.display = 'none';
@@ -611,7 +617,7 @@
     });
 
     /****************************************
-     * 5) Overlay-Auswahl
+     * 5) Overlay Selection
     ****************************************/
     overlayIcons.forEach(icon => {
       icon.addEventListener('click', () => {
@@ -633,6 +639,7 @@
         alert("Bitte ein Overlay auswählen!");
         return;
       }
+
       const baseImage = new Image();
       baseImage.onload = () => {
         combineImages(baseImage, selectedOverlaySrc);
@@ -654,7 +661,6 @@
         ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
 
         const finalDataURL = canvas.toDataURL('image/png');
-
         resultModal.style.display = 'flex';
         finalImage.src = finalDataURL;
 
@@ -669,11 +675,13 @@
     }
 
     /****************************************
-     * 7) Download & Botschaft
+     * 7) Download & Show Message
     ****************************************/
-    downloadBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
+    downloadBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const dataURL = finalImage.src;
+
+      // Download
       const a = document.createElement('a');
       a.href = dataURL;
       a.download = 'FCK_AFD_Blend.png';
@@ -681,22 +689,23 @@
       a.click();
       document.body.removeChild(a);
 
+      // Increase counters
       mixCounterValue++;
       localStorage.setItem('mixCounterValue', mixCounterValue);
       updateCounterUI();
 
       timesInRow++;
+
       stopConfetti();
       resultModal.style.display = 'none';
 
-      // Warte minimal, damit der Klick nicht sofort die Botschaft wieder schließt
       setTimeout(() => {
         showCenterMessage();
       }, 50);
     });
 
     /****************************************
-     * 8) Konfetti-Funktionen
+     * 8) Konfetti
     ****************************************/
     function startConfetti() {
       stopConfetti();
@@ -725,7 +734,7 @@
 
         const startX = Math.random() * 100;
         let endX = startX + (Math.random() * 40 - 20);
-        if (endX < 0) endX = 0;
+        if (endX < 0)   endX = 0;
         if (endX > 100) endX = 100;
         confetti.style.setProperty('--startX', startX + '%');
         confetti.style.setProperty('--endX', endX + '%');
@@ -742,10 +751,9 @@
     }
 
     /****************************************
-     * 9) Botschaft nach Download
+     * 9) Show Message (5 messages)
     ****************************************/
     function showCenterMessage() {
-      // Fünfter Eintrag hat zwei Zeilen
       let idx = timesInRow - 1;
       if (idx >= messages.length) idx = messages.length - 1;
 
@@ -753,16 +761,20 @@
       centerMessage.style.display = 'block';
       messageVisible = true;
 
-      // Bonuslevel => plusIcon sichtbar
       if (timesInRow >= 5) {
+        // Once unlocked, show the plus icon
         plusIcon.style.display = 'inline-flex';
       }
     }
 
-    /* Globaler Klick: Schließt Botschaft, wenn NICHT in #centerMessage, #iconContainer, #dropZone.
-       Dann resetUploadUI(), Bonuslevel bleibt bei timesInRow >= 5. */
+    /* Close message if user clicks outside #centerMessage, #iconContainer, #dropZone */
     document.addEventListener('click', (e) => {
-      if (messageVisible && !e.target.closest('#centerMessage') && !e.target.closest('#iconContainer') && !e.target.closest('#dropZone')) {
+      if (
+        messageVisible &&
+        !e.target.closest('#centerMessage') &&
+        !e.target.closest('#iconContainer') &&
+        !e.target.closest('#dropZone')
+      ) {
         centerMessage.style.display = 'none';
         messageVisible = false;
         resetUploadUI();
@@ -772,6 +784,8 @@
     function resetUploadUI() {
       dropZone.style.display = 'flex';
       preview.style.display = 'none';
+
+      // If user hasn't reached timesInRow >= 5, hide the plus icon again
       if (timesInRow < 5) {
         plusIcon.style.display = 'none';
       }
